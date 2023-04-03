@@ -1,0 +1,24 @@
+name: 'Run Alembic'
+description: 'Runs Alembic in a Docker container'
+
+inputs:
+  command:
+    description: 'The Alembic command to run (e.g. "upgrade head")'
+    required: true
+  working-directory:
+    description: 'The directory to run the Alembic command from'
+    required: false
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - sh
+    - -c
+    - |
+      if [ -n "${{ inputs.working-directory }}" ]; then cd "${{ inputs.working-directory }}"; fi
+      alembic ${{ inputs.command }}
+
+branding:
+  icon: 'refresh-cw'
+  color: 'blue'

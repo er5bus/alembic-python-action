@@ -1,0 +1,52 @@
+name: Github Action Run Alembic
+
+on:
+  push:
+    branches: [main]
+
+env:
+  POSTGRES_USER: test
+  POSTGRES_PASSWORD: test
+  POSTGRES_DATABASE: test
+
+  IMAGE_NAME: my-image
+  DOCKERFILE: Dockerfile
+  REGISTRY: ghcr.io
+  TAG: v1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Alembic migration upgrade
+        uses: ./
+        with:
+          command: upgrade head
+          working-directory: example
+        env:
+          DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@postgres:5432/${{ env.POSTGRES_DATABASE }}
+
+      - name: Run Alembic migration downgrade
+        uses: ./
+        with:
+          command: downgrade -1
+          working-directory: example
+        env:
+          DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@postgres:5432/${{ env.POSTGRES_DATABASE }}
